@@ -4,7 +4,7 @@ import { Menu, MenuItem, MenuList } from '@chakra-ui/menu';
 import { MenuButton } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 
-const NAVBAR_HEIGHT = '60px';
+export const NAVBAR_HEIGHT = '60px';
 
 const Navigation: React.FC = () => {
   const router = useRouter();

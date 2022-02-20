@@ -4,7 +4,7 @@ import React from 'react';
 import Navigation from '../organisms/Navigation';
 
 const Layout: React.FC = ({ children }) => (
-  <Grid gridTemplateRows="auto 1fr" h="100vh" overflowY="hidden">
+  <Grid gridTemplateRows="auto 1fr" h="full" overflowY="hidden">
     <Navigation />
     <Box as="main" overflowY="hidden">
       {children}

@@ -10,7 +10,15 @@ import theme from '../theme';
 const MyApp: React.FC<AppProps> = ({ Component, pageProps }: AppProps) => {
   const queryClientRef = useRef<QueryClient>();
   if (!queryClientRef.current) {
-    queryClientRef.current = new QueryClient();
+    queryClientRef.current = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          refetchOnWindowFocus: false,
+          cacheTime: 1000 * 60 * 60 * 2,
+        },
+      },
+    });
   }
 
   return (
