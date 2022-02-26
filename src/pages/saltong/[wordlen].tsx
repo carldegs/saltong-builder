@@ -1,28 +1,30 @@
 import {
-  Box,
   Button,
   Container,
   Flex,
-  HStack,
+  Heading,
   SimpleGrid,
   Spinner,
   Table,
   Tbody,
   Td,
-  Text,
   Th,
   Thead,
   Tr,
 } from '@chakra-ui/react';
+import { addDays, isSameDay } from 'date-fns';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Layout from '../../layouts/Layout';
-import useQueryRoundData from '../../modules/round/queries';
+import useQueryRoundData, {
+  useMutateRoundData,
+} from '../../modules/round/queries';
 import useQueryWordlist from '../../modules/wordlist/queries';
 import { NAVBAR_HEIGHT } from '../../organisms/Navigation';
 import GameData from '../../types/GameData';
 import GameMode from '../../types/GameMode';
+import { getDateString } from '../../utils';
 
 const getSaltongMode = (wordlen: number) => {
   switch (wordlen) {
@@ -40,21 +42,24 @@ const getSaltongMode = (wordlen: number) => {
 const Saltong: React.FC = () => {
   const { query } = useRouter();
   const { data: wordlist, isLoading } = useQueryWordlist(query);
-  const { data: roundData, isLoading: isLoadingRoundData } = useQueryRoundData(
-    getSaltongMode(Number(query.wordlen))
+  const addMutation = useMutateRoundData();
+  const mode = useMemo(
+    () => getSaltongMode(Number(query.wordlen)),
+    [query.wordlen]
   );
-  const [showAll, setShowAll] = useState(false);
+  const { data: roundData, isLoading: isLoadingRoundData } =
+    useQueryRoundData<GameData>(mode);
+  const [showAll] = useState(false);
   const [randomWords, setRandomWords] = useState<string[]>([]);
-  const [selectedWords, setSelectedWords] = useState([]);
+  const [newDate, setNewDate] = useState(getDateString());
+  const [newGameId, setNewGameId] = useState(0);
 
   const filteredWordlist = useMemo(() => {
     if (!wordlist?.length) {
       return [];
     }
 
-    const usedWords = Object.values(
-      (roundData || {}) as unknown as GameData
-    ).map(({ word }) => word);
+    const usedWords = Object.values(roundData || {}).map(({ word }) => word);
     return wordlist.filter((word) => !usedWords.includes(word));
   }, [roundData, wordlist]);
 
@@ -64,7 +69,19 @@ const Saltong: React.FC = () => {
     );
   }, [filteredWordlist]);
 
-  console.log(roundData, isLoadingRoundData);
+  useEffect(() => {
+    const initData = Object.values(roundData || {});
+    if (initData.length > 0) {
+      console.log('update!');
+      const lastRound = initData[initData.length - 1];
+
+      setNewDate(getDateString(addDays(new Date(lastRound.date), 1)));
+      setNewGameId(lastRound.gameId + 1);
+    }
+  }, [roundData]);
+
+  console.log({ roundData });
+
   return (
     <Layout>
       <Flex>
@@ -82,23 +99,33 @@ const Saltong: React.FC = () => {
                   <Th>Game ID</Th>
                   <Th>Date</Th>
                   <Th>Word</Th>
+                  <Th />
                 </Tr>
               </Thead>
               <Tbody>
-                {Object.values(roundData as unknown as GameData).map(
-                  ({ word, date, gameId }) => (
-                    <Tr key={`${word}-${date}`}>
-                      <Td>{gameId}</Td>
-                      <Td>{date}</Td>
-                      <Td>{word}</Td>
-                    </Tr>
-                  )
-                )}
+                {Object.values(roundData).map(({ word, date, gameId }) => (
+                  <Tr
+                    key={`${word}-${date}`}
+                    bg={
+                      isSameDay(new Date(), new Date(date))
+                        ? 'blue.100'
+                        : 'inherit'
+                    }
+                  >
+                    <Td>{gameId}</Td>
+                    <Td>{getDateString(new Date(date))}</Td>
+                    <Td>{word}</Td>
+                  </Tr>
+                ))}
               </Tbody>
             </Table>
           </Flex>
         )}
         <Container maxW="container.xl" mt={4} flexGrow={2}>
+          <Heading
+            fontSize="2xl"
+            mb={4}
+          >{`For Game #${newGameId} (${newDate})`}</Heading>
           {isLoading || isLoadingRoundData ? (
             <Spinner />
           ) : (
@@ -107,7 +134,14 @@ const Saltong: React.FC = () => {
                 <Button
                   key={word}
                   onClick={() => {
-                    setSelectedWords((words) => [...words, word]);
+                    addMutation.mutate({
+                      mode,
+                      roundData: {
+                        date: newDate,
+                        gameId: newGameId,
+                        word,
+                      } as GameData,
+                    });
                     getRandomWords();
                   }}
                 >
@@ -117,13 +151,9 @@ const Saltong: React.FC = () => {
             </SimpleGrid>
           )}
 
-          <Button onClick={getRandomWords}>Get new words</Button>
-
-          <SimpleGrid columns={5} spacing={4}>
-            {selectedWords.map((word) => (
-              <Text key={`selected-${word}`}>{word}</Text>
-            ))}
-          </SimpleGrid>
+          <Button onClick={getRandomWords} isFullWidth mt={4}>
+            Get new words
+          </Button>
         </Container>
       </Flex>
     </Layout>

@@ -27,7 +27,7 @@ const Navigation: React.FC = () => {
         onClick={() => router.push('/')}
         cursor="pointer"
       >
-        Site Title
+        Saltong Tools
       </Heading>
 
       <Spacer />

@@ -7,7 +7,7 @@ import { HexGameData } from '../../types/HexGameData';
 interface Data
   extends Record<
     `${Exclude<GameMode, GameMode.hex | GameMode.kal>}Round`,
-    GameData
+    Record<string, GameData>
   > {
   hex: HexGameData;
   wordlist: string[];
