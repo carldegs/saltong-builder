@@ -1,26 +1,27 @@
 import axios from 'axios';
-import { useQuery, UseQueryOptions } from 'react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  UseQueryOptions,
+} from 'react-query';
 
 import ApiError from '../../lib/errors/ApiError';
 import GameData from '../../types/GameData';
 import GameMode from '../../types/GameMode';
 import { HexGameData } from '../../types/HexGameData';
 
-export const getRoundData = async (
+export const getRoundData = async <T = HexGameData | GameData>(
   mode?: GameMode
-): Promise<Record<string, GameData | HexGameData>> => {
+): Promise<Record<string, T>> => {
   if (!mode) {
-    return mode === GameMode.hex
-      ? ({} as Record<string, HexGameData>)
-      : ({} as Record<string, GameData>);
+    return {} as Record<string, T>;
   }
 
   try {
-    const { data } = await axios.get(`/api/round/${mode}`);
+    const { data } = await axios.get<Record<string, T>>(`/api/round/${mode}`);
 
-    return mode === GameMode.hex
-      ? (data as Record<string, HexGameData>)
-      : (data as Record<string, GameData>);
+    return data;
   } catch (err) {
     const { status, data } = err?.response || {};
     const { message, payload } = data || {};
@@ -28,9 +29,45 @@ export const getRoundData = async (
   }
 };
 
-const useQueryRoundData = (
+export const addRoundData = async ({
+  mode,
+  roundData,
+}: {
+  mode: GameMode;
+  roundData: HexGameData | GameData;
+}) => {
+  try {
+    const { data } = await axios.post<{ success: boolean }>(
+      `/api/round/${mode}`,
+      roundData
+    );
+    return data;
+  } catch (err) {
+    const { status, data } = err?.response || {};
+    const { message, payload } = data || {};
+    throw new ApiError(status, message, payload);
+  }
+};
+
+const useQueryRoundData = <T = HexGameData | GameData>(
   mode?: GameMode,
-  options?: UseQueryOptions<Record<string, HexGameData | GameData>, ApiError>
-) => useQuery(['roundData', mode], () => getRoundData(mode), options);
+  options?: UseQueryOptions<Record<string, T>, ApiError>
+) => useQuery(['roundData', mode], () => getRoundData<T>(mode), options);
+
+export const useMutateRoundData = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation(addRoundData, {
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(
+        ['roundData', variables.mode],
+        (prevData: (HexGameData | GameData)[]) => ({
+          ...prevData,
+          [variables.roundData.date]: variables.roundData,
+        })
+      );
+    },
+  });
+};
 
 export default useQueryRoundData;
