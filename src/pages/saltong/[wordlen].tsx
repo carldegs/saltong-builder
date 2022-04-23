@@ -72,15 +72,12 @@ const Saltong: React.FC = () => {
   useEffect(() => {
     const initData = Object.values(roundData || {});
     if (initData.length > 0) {
-      console.log('update!');
       const lastRound = initData[initData.length - 1];
 
       setNewDate(getDateString(addDays(new Date(lastRound.date), 1)));
       setNewGameId(lastRound.gameId + 1);
     }
   }, [roundData]);
-
-  console.log({ roundData });
 
   return (
     <Layout>
