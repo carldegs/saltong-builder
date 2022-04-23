@@ -9,10 +9,6 @@ interface WordListSearchQuery {
 }
 
 export const getWordlist = async (query: WordListSearchQuery) => {
-  if (!query?.wordlen && !query?.search) {
-    return [];
-  }
-
   try {
     const { data } = await axios.get<string[]>(
       `/api/wordlist?${Object.entries(query).map(
@@ -29,9 +25,13 @@ export const getWordlist = async (query: WordListSearchQuery) => {
 };
 
 const useQueryWordlist = (
-  searchQuery: WordListSearchQuery,
+  searchQuery?: WordListSearchQuery,
   options?: UseQueryOptions<string[], ApiError>
 ) =>
-  useQuery(['wordlist', searchQuery], () => getWordlist(searchQuery), options);
+  useQuery(
+    ['wordlist', searchQuery],
+    () => getWordlist(searchQuery || {}),
+    options
+  );
 
 export default useQueryWordlist;

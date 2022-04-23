@@ -30,6 +30,10 @@ const Home: React.FC = () => {
         <Link href="/saltong/7">
           <Button>Saltong Max Word Generator</Button>
         </Link>
+
+        <Link href="/hex">
+          <Button>Saltong Hex Round Generator</Button>
+        </Link>
       </Stack>
     </Layout>
   );
