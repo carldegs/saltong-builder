@@ -10,7 +10,7 @@ interface Data
     `${Exclude<GameMode, GameMode.hex | GameMode.kal>}Round`,
     Record<string, GameData>
   > {
-  hex: HexGameData;
+  hexRound: HexGameData;
   wordlist: string[];
   hexBlacklist: string[];
   hexCombo: CombinationData[];

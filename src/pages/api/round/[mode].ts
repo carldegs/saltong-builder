@@ -48,6 +48,16 @@ const RoundHandler = createApiHandler()
       throw new Error(
         `Entry with date ${data.date} already exists. Call patch instead to update it.`
       );
+    } else if (mode === GameMode.hex) {
+      // TODO: add duplicate date check
+      db.data.hexRound = {
+        ...db.data.hexRound,
+        [data.date]: data as HexGameData,
+      };
+
+      await db.write();
+
+      res.json({ success: true });
     }
   });
 
