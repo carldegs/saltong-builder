@@ -1,8 +1,10 @@
+import { DownloadIcon } from '@chakra-ui/icons';
 import {
   Button,
   Container,
   Flex,
   Heading,
+  IconButton,
   SimpleGrid,
   Spinner,
   Table,
@@ -16,6 +18,7 @@ import { addDays, isSameDay } from 'date-fns';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import useJsonDownload from '../../hooks/useJsonDownload';
 import Layout from '../../layouts/Layout';
 import useQueryRoundData, {
   useMutateRoundData,
@@ -53,6 +56,24 @@ const Saltong: React.FC = () => {
   const [randomWords, setRandomWords] = useState<string[]>([]);
   const [newDate, setNewDate] = useState(getDateString());
   const [newGameId, setNewGameId] = useState(0);
+  const download = useJsonDownload();
+  const filename = useMemo(() => {
+    let mode = '';
+
+    switch (+query.wordlen) {
+      case 5:
+        mode = 'main';
+        break;
+      case 7:
+        mode = 'max';
+        break;
+      case 4:
+        mode = 'mini';
+        break;
+    }
+
+    return `${mode}Round.json`;
+  }, [query.wordlen]);
 
   const filteredWordlist = useMemo(() => {
     if (!wordlist?.length) {
@@ -89,7 +110,19 @@ const Saltong: React.FC = () => {
             flexDir="column"
             h={`calc(100vh - ${NAVBAR_HEIGHT})`}
             overflowY="auto"
+            pos="relative"
           >
+            <IconButton
+              icon={<DownloadIcon />}
+              aria-label="Download"
+              onClick={() => {
+                download(roundData, filename);
+              }}
+              pos="fixed"
+              left="400px"
+              bottom={4}
+              colorScheme="teal"
+            />
             <Table variant="simple">
               <Thead>
                 <Tr>

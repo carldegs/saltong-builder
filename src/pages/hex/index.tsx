@@ -1,3 +1,4 @@
+import { DownloadIcon } from '@chakra-ui/icons';
 import {
   Box,
   Button,
@@ -5,6 +6,7 @@ import {
   Container,
   Flex,
   Heading,
+  IconButton,
   Spinner,
   Table,
   Tbody,
@@ -17,6 +19,7 @@ import {
 import { isSameDay } from 'date-fns';
 
 import { useHexSelection } from '../../hooks/useHexSelection';
+import useJsonDownload from '../../hooks/useJsonDownload';
 import Layout from '../../layouts/Layout';
 import { useMutateHexCombo } from '../../modules/hexcombo/queries';
 import ComboSelectModal from '../../organisms/ComboSelectModal';
@@ -50,6 +53,7 @@ const HexBuilder: React.FC = () => {
     onUpdate,
     onSubmit,
   } = useHexSelection();
+  const download = useJsonDownload();
 
   return (
     <Layout>
@@ -81,7 +85,19 @@ const HexBuilder: React.FC = () => {
             flexDir="column"
             h={`calc(100vh - ${NAVBAR_HEIGHT})`}
             overflowY="auto"
+            pos="relative"
           >
+            <IconButton
+              icon={<DownloadIcon />}
+              aria-label="Download"
+              onClick={() => {
+                download(roundData, 'hexRound.json');
+              }}
+              pos="fixed"
+              left="660px"
+              bottom={4}
+              colorScheme="teal"
+            />
             <Table variant="simple">
               <Thead>
                 <Tr>
