@@ -1,3 +1,4 @@
+import { DownloadIcon } from '@chakra-ui/icons';
 import {
   Box,
   Button,
@@ -5,6 +6,7 @@ import {
   Container,
   Flex,
   Heading,
+  IconButton,
   Spinner,
   Table,
   Tbody,
@@ -15,56 +17,64 @@ import {
   Tr,
 } from '@chakra-ui/react';
 import { isSameDay } from 'date-fns';
-import { useEffect, useState } from 'react';
 
+import { useHexSelection } from '../../hooks/useHexSelection';
+import useJsonDownload from '../../hooks/useJsonDownload';
 import Layout from '../../layouts/Layout';
-import useQueryHexCombo, {
-  useMutateHexCombo,
-} from '../../modules/hexcombo/queries';
-import useQueryRoundData from '../../modules/round/queries';
+import { useMutateHexCombo } from '../../modules/hexcombo/queries';
 import ComboSelectModal from '../../organisms/ComboSelectModal';
+import HexAnswersSelectModal from '../../organisms/HexAnswersSelectModal';
 import { NAVBAR_HEIGHT } from '../../organisms/Navigation';
-import { CombinationData } from '../../types/CombinationData';
-import GameMode from '../../types/GameMode';
-import { HexGameData } from '../../types/HexGameData';
-import {
-  getCurrHexRound,
-  getDateString,
-  getNextHexRound,
-  showRange,
-} from '../../utils';
+import { getCurrHexRound, getDateString, showRange } from '../../utils';
+
+export enum HexSelectionState {
+  init,
+  centerLetterSelect,
+  answersSelect,
+}
 
 const HexBuilder: React.FC = () => {
   // const addMutation = useMutateRoundData();
-  const { data: roundData, isLoading: isLoadingRoundData } =
-    useQueryRoundData<HexGameData>(GameMode.hex);
-  const [newDate, setNewDate] = useState(getDateString());
   const generateHexCombo = useMutateHexCombo();
-  const [newGameId, setNewGameId] = useState(0);
-  const { data: hexCombo, isLoading: isFetchingHexCombo } = useQueryHexCombo();
-  const [selectedCombo, setSelectedCombo] = useState<
-    CombinationData | undefined
-  >(undefined);
-
-  useEffect(() => {
-    const initData = Object.values(roundData || {});
-    if (initData.length > 0) {
-      const lastRound = initData[initData.length - 1];
-
-      setNewDate(getDateString(getNextHexRound(lastRound.date)));
-      setNewGameId(lastRound.gameId + 1);
-    }
-  }, [roundData]);
+  const {
+    combo: selectedCombo,
+    centerLetter: selectedCenterLetter,
+    selectionState,
+    answerList,
+    selectedWords,
+    roundData,
+    newGameId,
+    newDate,
+    hexCombo,
+    isLoading,
+    onSelectCombo,
+    onSelectCenterLetter,
+    onBack,
+    onUpdate,
+    onSubmit,
+  } = useHexSelection();
+  const download = useJsonDownload();
 
   return (
     <Layout>
-      {selectedCombo && (
+      {selectionState === HexSelectionState.centerLetterSelect && (
         <ComboSelectModal
-          isOpen={!!selectedCombo}
-          onClose={() => {
-            setSelectedCombo(undefined);
-          }}
+          isOpen={selectionState === HexSelectionState.centerLetterSelect}
+          onClose={onBack}
+          onSelect={onSelectCenterLetter}
           combo={selectedCombo}
+        />
+      )}
+      {selectionState === HexSelectionState.answersSelect && (
+        <HexAnswersSelectModal
+          isOpen={selectionState === HexSelectionState.answersSelect}
+          onClose={onBack}
+          validWords={answerList}
+          selectedWords={selectedWords}
+          onUpdate={onUpdate}
+          onSubmit={onSubmit}
+          rootWord={selectedCombo?.rootWord}
+          centerLetter={selectedCenterLetter}
         />
       )}
       <Flex>
@@ -75,7 +85,19 @@ const HexBuilder: React.FC = () => {
             flexDir="column"
             h={`calc(100vh - ${NAVBAR_HEIGHT})`}
             overflowY="auto"
+            pos="relative"
           >
+            <IconButton
+              icon={<DownloadIcon />}
+              aria-label="Download"
+              onClick={() => {
+                download(roundData, 'hexRound.json');
+              }}
+              pos="fixed"
+              left="660px"
+              bottom={4}
+              colorScheme="teal"
+            />
             <Table variant="simple">
               <Thead>
                 <Tr>
@@ -137,7 +159,7 @@ const HexBuilder: React.FC = () => {
               Generate
             </Button>
           </Flex>
-          {isLoadingRoundData || isFetchingHexCombo ? (
+          {isLoading ? (
             <Spinner />
           ) : (
             <Flex>
@@ -185,7 +207,7 @@ const HexBuilder: React.FC = () => {
                               <Button
                                 colorScheme="green"
                                 onClick={() => {
-                                  setSelectedCombo(hexCombo[i]);
+                                  onSelectCombo(hexCombo[i]);
                                 }}
                               >
                                 Select

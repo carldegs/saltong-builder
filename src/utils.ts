@@ -11,6 +11,8 @@ import {
   previousTuesday,
 } from 'date-fns';
 
+import HexAnswer from './types/HexAnswer';
+
 export const getDateString = (date: Date | string = new Date()) =>
   format(new Date(date), 'yyyy-MM-dd');
 
@@ -42,3 +44,55 @@ export const getWordScore = (word) =>
 
 export const showRange = (min: number, max: number) =>
   min === max ? `${min}` : `${min}-${max}`;
+
+export const getHexAnswers = (
+  cleanWordList: Omit<HexAnswer, 'isPangram' | 'score'>[],
+  rootWord: string,
+  centerLetter: string
+): HexAnswer[] =>
+  cleanWordList
+    .filter(
+      ({ letters: cLetters }) =>
+        cLetters.includes(centerLetter) &&
+        cLetters.split('').every((letter) => rootWord.indexOf(letter) >= 0)
+    )
+    .map(({ word, letters }) => ({
+      word,
+      letters,
+      isPangram: isPangram(word),
+      score: getWordScore(word),
+    }));
+
+export const getNumPangrams = (
+  validWords: HexAnswer[],
+  selectedWords: string[]
+) => {
+  const filteredWords = validWords.filter(({ word }) =>
+    selectedWords.includes(word)
+  );
+
+  let numPangrams = 0;
+  filteredWords.forEach(({ isPangram }) => {
+    if (isPangram) {
+      numPangrams += 1;
+    }
+  });
+
+  return numPangrams;
+};
+
+export const getMaxScore = (
+  validWords: HexAnswer[],
+  selectedWords: string[]
+) => {
+  const filteredWords = validWords.filter(({ word }) =>
+    selectedWords.includes(word)
+  );
+
+  let maxScore = 0;
+  filteredWords.forEach(({ score }) => {
+    maxScore += score;
+  });
+
+  return maxScore;
+};
